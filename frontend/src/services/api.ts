@@ -1,0 +1,92 @@
+import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
+import type { ApiError } from '../types/api';
+
+class ApiClient {
+  private client: AxiosInstance;
+  private token: string | null = null;
+
+  constructor() {
+    this.client = axios.create({
+      baseURL: '/api',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Intercepteur pour ajouter le token JWT
+    this.client.interceptors.request.use((config) => {
+      if (this.token) {
+        config.headers.Authorization = `Bearer ${this.token}`;
+      }
+      return config;
+    });
+
+    // Intercepteur pour gérer les erreurs
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          this.clearToken();
+          // Rediriger vers login si pas déjà sur la page
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }
+
+        const apiError: ApiError = {
+          message: error.response?.data?.message || error.message,
+          code: error.response?.data?.code,
+          errors: error.response?.data?.errors,
+        };
+
+        return Promise.reject(apiError);
+      }
+    );
+
+    // Récupérer le token du localStorage au démarrage
+    this.token = localStorage.getItem('authToken');
+  }
+
+  setToken(token: string): void {
+    this.token = token;
+    localStorage.setItem('authToken', token);
+  }
+
+  clearToken(): void {
+    this.token = null;
+    localStorage.removeItem('authToken');
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.token;
+  }
+
+  // Méthodes HTTP génériques
+  async get<T>(url: string, params?: Record<string, any>): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.get(url, { params });
+    return response.data;
+  }
+
+  async post<T>(url: string, data?: any): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.post(url, data);
+    return response.data;
+  }
+
+  async put<T>(url: string, data?: any): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.put(url, data);
+    return response.data;
+  }
+
+  async delete<T>(url: string): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.delete(url);
+    return response.data;
+  }
+}
+
+// Instance singleton
+const apiClient = new ApiClient();
+export default apiClient;

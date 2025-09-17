@@ -1,0 +1,40 @@
+# Backend Dockerfile for development
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install development tools
+RUN apk add --no-cache dumb-init
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install all dependencies (including dev)
+RUN npm ci
+
+# Copy source code
+COPY prisma/ ./prisma/
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S backend -u 1001
+
+# Create logs directory
+RUN mkdir -p /app/logs && chown backend:nodejs /app/logs
+
+# Set ownership
+RUN chown -R backend:nodejs /app
+
+USER backend
+
+EXPOSE 5000
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Development command with hot reload
+CMD ["npm", "run", "dev"]

@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum EquipmentStatus {
+  IN_SERVICE
+  OUT_OF_SERVICE
+  MAINTENANCE
+  LOANED
+}
+
+enum EventType {
+  LOAN
+  RETURN
+  MAINTENANCE_START
+  MAINTENANCE_END
+  STATUS_CHANGE
+  TAG_ASSIGNED
+  TAG_REMOVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  equipmentsCreated Equipment[] @relation("EquipmentCreatedBy")
+  events            EquipmentEvent[]
+
+  @@index([email], map: "idx_users_email")
+  @@index([role], map: "idx_users_role")
+  @@map("users")
+}
+
+model Equipment {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  status      EquipmentStatus @default(IN_SERVICE)
+  location    String?
+  notes       String?
+  createdBy   String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  creator User             @relation("EquipmentCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
+  tag     NfcTag?
+  events  EquipmentEvent[]
+
+  @@index([category], map: "idx_equipment_category")
+  @@index([status], map: "idx_equipment_status")
+  @@index([createdBy], map: "idx_equipment_created_by")
+  @@index([createdAt], map: "idx_equipment_created_at")
+  @@map("equipment")
+}
+
+model NfcTag {
+  id          String   @id @default(cuid())
+  tagId       String   @unique // NFC tag physical ID
+  equipmentId String?  @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+
+  @@index([tagId], map: "idx_nfc_tags_tag_id")
+  @@index([equipmentId], map: "idx_nfc_tags_equipment")
+  @@map("nfc_tags")
+}
+
+model EquipmentEvent {
+  id          String    @id @default(cuid())
+  equipmentId String
+  type        EventType
+  description String?
+  userId      String
+  metadata    Json?     // Flexible JSON field for additional event data
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId], map: "idx_events_equipment")
+  @@index([type], map: "idx_events_type")
+  @@index([userId], map: "idx_events_user")
+  @@index([createdAt], map: "idx_events_created_at")
+  @@map("equipment_events")
+}
