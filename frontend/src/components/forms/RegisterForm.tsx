@@ -97,35 +97,41 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="alert alert-danger rounded-3 mb-0" role="alert">
+          {error.message}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Prénom"
-          type="text"
-          name="firstName"
-          value={formData.firstName}
-          onChange={handleChange}
-          error={formErrors.firstName}
-          required
-          autoComplete="given-name"
-        />
+      <div className="row g-3">
+        <div className="col-12 col-md-6">
+          <Input
+            label="Prénom"
+            type="text"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            error={formErrors.firstName}
+            required
+            autoComplete="given-name"
+            appearance="bootstrap"
+          />
+        </div>
 
-        <Input
-          label="Nom"
-          type="text"
-          name="lastName"
-          value={formData.lastName}
-          onChange={handleChange}
-          error={formErrors.lastName}
-          required
-          autoComplete="family-name"
-        />
+        <div className="col-12 col-md-6">
+          <Input
+            label="Nom"
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            error={formErrors.lastName}
+            required
+            autoComplete="family-name"
+            appearance="bootstrap"
+          />
+        </div>
       </div>
 
       <Input
@@ -137,47 +143,59 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         error={formErrors.email}
         required
         autoComplete="email"
+        appearance="bootstrap"
       />
 
-      <Input
-        label="Mot de passe"
-        type="password"
-        name="password"
-        value={formData.password}
-        onChange={handleChange}
-        error={formErrors.password}
-        required
-        autoComplete="new-password"
-      />
-
-      <Input
-        label="Confirmer le mot de passe"
-        type="password"
-        name="confirmPassword"
-        value={formData.confirmPassword}
-        onChange={handleChange}
-        error={formErrors.confirmPassword}
-        required
-        autoComplete="new-password"
-      />
+      <div className="row g-3">
+        <div className="col-12 col-md-6">
+          <Input
+            label="Mot de passe"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            error={formErrors.password}
+            required
+            autoComplete="new-password"
+            appearance="bootstrap"
+          />
+        </div>
+        <div className="col-12 col-md-6">
+          <Input
+            label="Confirmer le mot de passe"
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            error={formErrors.confirmPassword}
+            required
+            autoComplete="new-password"
+            appearance="bootstrap"
+          />
+        </div>
+      </div>
 
       <Button
         type="submit"
         variant="primary"
         size="lg"
         isLoading={isLoading}
-        className="w-full"
+        appearance="bootstrap"
+        className="w-100"
       >
         {isLoading ? 'Inscription...' : "S'inscrire"}
       </Button>
 
       {onSwitchToLogin && (
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-muted small mb-0">
           Déjà un compte ?{' '}
           <button
             type="button"
-            onClick={onSwitchToLogin}
-            className="font-semibold text-blue-600 hover:text-blue-500"
+            onClick={() => {
+              clearError();
+              onSwitchToLogin();
+            }}
+            className="btn btn-link p-0 align-baseline"
           >
             Se connecter
           </button>

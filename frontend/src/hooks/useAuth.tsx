@@ -11,7 +11,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  error: string | null;
+  error: ApiError | null;
   clearError: () => void;
 }
 
@@ -24,7 +24,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   const clearError = () => setError(null);
 
@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(response.user);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message);
+      setError(apiError);
       throw err;
     } finally {
       setIsLoading(false);
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(response.user);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message);
+      setError(apiError);
       throw err;
     } finally {
       setIsLoading(false);
@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(updatedUser);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message);
+      setError(apiError);
       throw err;
     }
   };
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authService.changePassword(currentPassword, newPassword);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message);
+      setError(apiError);
       throw err;
     }
   };

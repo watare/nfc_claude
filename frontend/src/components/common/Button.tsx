@@ -4,6 +4,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  appearance?: 'tailwind' | 'bootstrap';
+  block?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -13,21 +15,68 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   disabled,
   className = '',
+  appearance = 'tailwind',
+  block = false,
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+  const isBootstrap = appearance === 'bootstrap';
+
+  if (isBootstrap) {
+    const variantClasses = {
+      primary: 'btn-primary',
+      secondary: 'btn-outline-secondary',
+      danger: 'btn-danger',
+    } as const;
+
+    const sizeClasses = {
+      sm: 'btn-sm',
+      md: '',
+      lg: 'btn-lg',
+    } as const;
+
+    const classes = [
+      'btn',
+      variantClasses[variant],
+      sizeClasses[size],
+      block ? 'w-100' : '',
+      className,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    return (
+      <button
+        className={classes}
+        disabled={disabled || isLoading}
+        {...props}
+      >
+        {isLoading && (
+          <span
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          />
+        )}
+        {children}
+      </button>
+    );
+  }
+
+  const baseClasses =
+    'inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
 
   const variantClasses = {
     primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
     secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-  };
+  } as const;
 
   const sizeClasses = {
     sm: 'px-3 py-2 text-sm',
     md: 'px-4 py-2 text-sm',
     lg: 'px-6 py-3 text-base',
-  };
+  } as const;
 
   const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
