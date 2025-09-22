@@ -34,9 +34,14 @@ class ApiClient {
         }
 
         const apiError: ApiError = {
-          message: error.response?.data?.message || error.message,
+          message:
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            error.message,
           code: error.response?.data?.code,
           errors: error.response?.data?.errors,
+          action: error.response?.data?.action,
+          details: error.response?.data?.details,
         };
 
         return Promise.reject(apiError);

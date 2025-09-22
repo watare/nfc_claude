@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { AuthService } from '../services/authService';
 import { logger } from '../utils/logger';
+import { AppError } from '../utils/errors';
 
 export class AuthController {
   // Inscription d'un nouvel utilisateur
@@ -16,6 +17,7 @@ export class AuthController {
         });
         res.status(400).json({
           error: 'Données invalides',
+          message: 'Données invalides',
           details: errors.array()
         });
         return;
@@ -37,14 +39,17 @@ export class AuthController {
 
       if (error instanceof Error) {
         if (error.message.includes('existe déjà')) {
-          res.status(409).json({ error: error.message });
+          res.status(409).json({ error: error.message, message: error.message });
         } else if (error.message.includes('mot de passe')) {
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error.message, message: error.message });
         } else {
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error.message, message: error.message });
         }
       } else {
-        res.status(500).json({ error: 'Erreur serveur lors de l\'inscription' });
+        res.status(500).json({
+          error: "Erreur serveur lors de l'inscription",
+          message: "Erreur serveur lors de l'inscription"
+        });
       }
     }
   }
@@ -57,6 +62,7 @@ export class AuthController {
       if (!errors.isEmpty()) {
         res.status(400).json({
           error: 'Données invalides',
+          message: 'Données invalides',
           details: errors.array()
         });
         return;
@@ -70,14 +76,25 @@ export class AuthController {
     } catch (error) {
       logger.error('Erreur dans login controller:', error);
 
-      if (error instanceof Error) {
+      if (error instanceof AppError) {
+        res.status(error.statusCode).json({
+          error: error.message,
+          message: error.message,
+          code: error.code,
+          action: error.action,
+          details: error.details
+        });
+      } else if (error instanceof Error) {
         if (error.message.includes('incorrect') || error.message.includes('désactivé')) {
-          res.status(401).json({ error: error.message });
+          res.status(401).json({ error: error.message, message: error.message });
         } else {
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error.message, message: error.message });
         }
       } else {
-        res.status(500).json({ error: 'Erreur serveur lors de la connexion' });
+        res.status(500).json({
+          error: 'Erreur serveur lors de la connexion',
+          message: 'Erreur serveur lors de la connexion'
+        });
       }
     }
   }
@@ -86,7 +103,10 @@ export class AuthController {
   static async getMe(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({ error: 'Authentification requise' });
+        res.status(401).json({
+          error: 'Authentification requise',
+          message: 'Authentification requise'
+        });
         return;
       }
 
@@ -97,9 +117,12 @@ export class AuthController {
       logger.error('Erreur dans getMe controller:', error);
 
       if (error instanceof Error && error.message.includes('non trouvé')) {
-        res.status(404).json({ error: error.message });
+        res.status(404).json({ error: error.message, message: error.message });
       } else {
-        res.status(500).json({ error: 'Erreur serveur lors de la récupération du profil' });
+        res.status(500).json({
+          error: 'Erreur serveur lors de la récupération du profil',
+          message: 'Erreur serveur lors de la récupération du profil'
+        });
       }
     }
   }
@@ -108,7 +131,10 @@ export class AuthController {
   static async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({ error: 'Authentification requise' });
+        res.status(401).json({
+          error: 'Authentification requise',
+          message: 'Authentification requise'
+        });
         return;
       }
 
@@ -117,6 +143,7 @@ export class AuthController {
       if (!errors.isEmpty()) {
         res.status(400).json({
           error: 'Données invalides',
+          message: 'Données invalides',
           details: errors.array()
         });
         return;
@@ -136,12 +163,15 @@ export class AuthController {
 
       if (error instanceof Error) {
         if (error.message.includes('existe déjà')) {
-          res.status(409).json({ error: error.message });
+          res.status(409).json({ error: error.message, message: error.message });
         } else {
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error.message, message: error.message });
         }
       } else {
-        res.status(500).json({ error: 'Erreur serveur lors de la mise à jour du profil' });
+        res.status(500).json({
+          error: 'Erreur serveur lors de la mise à jour du profil',
+          message: 'Erreur serveur lors de la mise à jour du profil'
+        });
       }
     }
   }
@@ -150,7 +180,10 @@ export class AuthController {
   static async changePassword(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({ error: 'Authentification requise' });
+        res.status(401).json({
+          error: 'Authentification requise',
+          message: 'Authentification requise'
+        });
         return;
       }
 
@@ -159,6 +192,7 @@ export class AuthController {
       if (!errors.isEmpty()) {
         res.status(400).json({
           error: 'Données invalides',
+          message: 'Données invalides',
           details: errors.array()
         });
         return;
@@ -176,14 +210,17 @@ export class AuthController {
 
       if (error instanceof Error) {
         if (error.message.includes('incorrect')) {
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error.message, message: error.message });
         } else if (error.message.includes('caractères')) {
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error.message, message: error.message });
         } else {
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error.message, message: error.message });
         }
       } else {
-        res.status(500).json({ error: 'Erreur serveur lors du changement de mot de passe' });
+        res.status(500).json({
+          error: 'Erreur serveur lors du changement de mot de passe',
+          message: 'Erreur serveur lors du changement de mot de passe'
+        });
       }
     }
   }
@@ -204,7 +241,10 @@ export class AuthController {
       });
     } catch (error) {
       logger.error('Erreur dans logout controller:', error);
-      res.status(500).json({ error: 'Erreur serveur lors de la déconnexion' });
+      res.status(500).json({
+        error: 'Erreur serveur lors de la déconnexion',
+        message: 'Erreur serveur lors de la déconnexion'
+      });
     }
   }
 }

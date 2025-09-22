@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import { PrismaClient, User, UserRole } from '@prisma/client';
 import { generateToken } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { AuthError } from '../utils/errors';
+import { PasswordResetService } from './passwordResetService';
 
 const prisma = new PrismaClient();
 
@@ -110,18 +112,43 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new Error('Email ou mot de passe incorrect');
+        throw new AuthError('Aucun compte trouvé pour cette adresse email.', {
+          statusCode: 404,
+          code: 'USER_NOT_FOUND',
+          action: 'REDIRECT_TO_REGISTRATION'
+        });
       }
 
       // Vérification si l'utilisateur est actif
       if (!user.isActive) {
-        throw new Error('Compte utilisateur désactivé');
+        throw new AuthError('Compte utilisateur désactivé', {
+          statusCode: 401,
+          code: 'USER_DISABLED'
+        });
       }
 
       // Vérification du mot de passe
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        throw new Error('Email ou mot de passe incorrect');
+        const resetRequest = await PasswordResetService.createResetRequest(user);
+
+        const details = process.env.NODE_ENV === 'production'
+          ? undefined
+          : {
+              resetToken: resetRequest.token,
+              resetLink: resetRequest.resetLink,
+              expiresAt: resetRequest.expiresAt.toISOString()
+            };
+
+        throw new AuthError(
+          'Mot de passe incorrect. Nous vous avons envoyé un lien de réinitialisation.',
+          {
+            statusCode: 401,
+            code: 'INVALID_PASSWORD',
+            action: 'PASSWORD_RESET_EMAIL_SENT',
+            details
+          }
+        );
       }
 
       // Génération du token
