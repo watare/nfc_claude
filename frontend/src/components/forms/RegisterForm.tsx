@@ -97,9 +97,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Inscription</h2>
-
+    <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
@@ -174,12 +172,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       </Button>
 
       {onSwitchToLogin && (
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-gray-500">
           Déjà un compte ?{' '}
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-blue-600 hover:text-blue-500 font-medium"
+            className="font-semibold text-blue-600 hover:text-blue-500"
           >
             Se connecter
           </button>

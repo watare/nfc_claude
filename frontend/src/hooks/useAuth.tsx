@@ -67,12 +67,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       setError(null);
-      await authService.register(userData);
-      // Après inscription, connecter automatiquement
-      await login({
-        email: userData.email,
-        password: userData.password,
-      });
+      const response = await authService.register(userData);
+      setUser(response.user);
     } catch (err) {
       const apiError = err as ApiError;
       setError(apiError.message);

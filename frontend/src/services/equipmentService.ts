@@ -45,9 +45,9 @@ export class EquipmentService {
     return response.data;
   }
 
-  async assignNfcTag(equipmentId: string, nfcTagUid: string): Promise<Equipment> {
+  async assignNfcTag(equipmentId: string, tagId: string): Promise<Equipment> {
     return await apiClient.post<Equipment>(`/equipments/${equipmentId}/nfc-tag`, {
-      nfcTagUid,
+      tagId,
     });
   }
 

@@ -4,18 +4,18 @@ import { useEquipments } from '../../hooks/useEquipments';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   IN_SERVICE: 'En service',
   OUT_OF_SERVICE: 'Hors service',
   MAINTENANCE: 'Maintenance',
-  RETIRED: 'Retiré',
+  LOANED: 'En prêt',
 };
 
-const statusColors = {
-  IN_SERVICE: 'bg-green-100 text-green-800',
-  OUT_OF_SERVICE: 'bg-red-100 text-red-800',
-  MAINTENANCE: 'bg-yellow-100 text-yellow-800',
-  RETIRED: 'bg-gray-100 text-gray-800',
+const statusClasses: Record<string, string> = {
+  IN_SERVICE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  OUT_OF_SERVICE: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+  MAINTENANCE: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  LOANED: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
 };
 
 export const EquipmentListPage: React.FC = () => {
@@ -40,39 +40,44 @@ export const EquipmentListPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Équipements</h1>
-          <p className="text-gray-600">{total} équipement(s) au total</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium uppercase tracking-wide text-blue-600">Inventaire</p>
+          <h1 className="text-3xl font-semibold text-gray-900">Équipements</h1>
+          <p className="text-sm text-gray-600">
+            {total} équipement{total > 1 ? 's' : ''} suivis dans le parc
+          </p>
         </div>
-        <Link to="/equipments/new">
+        <Link to="/equipments/new" className="md:self-start">
           <Button variant="primary">
-            Ajouter équipement
+            Ajouter un équipement
           </Button>
         </Link>
       </div>
 
       {/* Liste des équipements */}
-      <Card>
+      <Card className="overflow-hidden" contentClassName="p-0">
         {equipments.length === 0 ? (
-          <div className="text-center py-12">
-            <span className="text-6xl mb-4 block">📦</span>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Aucun équipement
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Commencez par ajouter votre premier équipement.
-            </p>
+          <div className="flex flex-col items-center justify-center gap-3 py-16">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-gray-300">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 opacity-70" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900">Aucun équipement pour le moment</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Ajoutez votre premier équipement pour lancer le suivi NFC.
+              </p>
+            </div>
             <Link to="/equipments/new">
               <Button variant="primary">
-                Ajouter équipement
+                Ajouter un équipement
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50/80">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nom
@@ -96,34 +101,46 @@ export const EquipmentListPage: React.FC = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {equipments.map((equipment) => (
-                  <tr key={equipment.id} className="hover:bg-gray-50">
+                  <tr key={equipment.id} className="hover:bg-gray-50/70">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-semibold text-gray-900">
                           {equipment.name}
-                        </div>
+                        </span>
                         {equipment.serialNumber && (
-                          <div className="text-sm text-gray-500">
-                            S/N: {equipment.serialNumber}
-                          </div>
+                          <span className="text-xs uppercase tracking-wide text-gray-500">
+                            S/N&nbsp;{equipment.serialNumber}
+                          </span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {equipment.category}
+                      <span className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-200">
+                        {equipment.category}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColors[equipment.status]}`}>
-                        {statusLabels[equipment.status]}
+                      <span
+                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
+                          statusClasses[equipment.status] || 'bg-gray-50 text-gray-700 ring-gray-200'
+                        }`}
+                      >
+                        <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-75" />
+                        {statusLabels[equipment.status] ?? equipment.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {equipment.location}
+                      {equipment.location ? (
+                        <span className="font-medium text-gray-800">{equipment.location}</span>
+                      ) : (
+                        <span className="text-gray-400">Non renseigné</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {equipment.nfcTagId ? (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                          📱 Assigné
+                      {equipment.tag ? (
+                        <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                          <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
+                          {equipment.tag.tagId}
                         </span>
                       ) : (
                         <span className="text-gray-400">Non assigné</span>
@@ -132,15 +149,9 @@ export const EquipmentListPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link
                         to={`/equipments/${equipment.id}`}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="text-blue-600 transition hover:text-blue-800"
                       >
                         Détails
-                      </Link>
-                      <Link
-                        to={`/equipments/${equipment.id}/edit`}
-                        className="text-gray-600 hover:text-gray-900"
-                      >
-                        Modifier
                       </Link>
                     </td>
                   </tr>

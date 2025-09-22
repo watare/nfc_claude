@@ -3,6 +3,18 @@ import { logger } from '../utils/logger';
 
 const prisma = new PrismaClient();
 
+const equipmentInclude = {
+  creator: {
+    select: { id: true, firstName: true, lastName: true, email: true }
+  },
+  tag: {
+    select: { id: true, tagId: true, isActive: true, createdAt: true, updatedAt: true }
+  },
+  _count: {
+    select: { events: true }
+  }
+} as const;
+
 // Interface pour les données de création d'équipement
 export interface CreateEquipmentData {
   name: string;
@@ -48,15 +60,7 @@ export class EquipmentService {
           ...data,
           createdBy
         },
-        include: {
-          creator: {
-            select: { id: true, firstName: true, lastName: true, email: true }
-          },
-          tag: true,
-          _count: {
-            select: { events: true }
-          }
-        }
+        include: equipmentInclude
       });
 
       // Créer un événement de création
@@ -128,17 +132,7 @@ export class EquipmentService {
           skip,
           take: limit,
           orderBy,
-          include: {
-            creator: {
-              select: { id: true, firstName: true, lastName: true, email: true }
-            },
-            tag: {
-              select: { id: true, tagId: true, isActive: true }
-            },
-            _count: {
-              select: { events: true }
-            }
-          }
+          include: equipmentInclude
         }),
         prisma.equipment.count({ where })
       ]);
@@ -218,17 +212,7 @@ export class EquipmentService {
       const updatedEquipment = await prisma.equipment.update({
         where: { id },
         data,
-        include: {
-          creator: {
-            select: { id: true, firstName: true, lastName: true, email: true }
-          },
-          tag: {
-            select: { id: true, tagId: true, isActive: true }
-          },
-          _count: {
-            select: { events: true }
-          }
-        }
+        include: equipmentInclude
       });
 
       // Créer des événements pour les changements significatifs
@@ -373,7 +357,16 @@ export class EquipmentService {
 
       logger.info(`Tag NFC ${tagId} assigné à l'équipement ${equipment.name}`);
 
-      return nfcTag;
+      const updatedEquipment = await prisma.equipment.findUnique({
+        where: { id: equipmentId },
+        include: equipmentInclude
+      });
+
+      if (!updatedEquipment) {
+        throw new Error('Équipement non trouvé après mise à jour du tag');
+      }
+
+      return updatedEquipment;
     } catch (error) {
       logger.error('Erreur lors de l\'assignation du tag NFC:', error);
       throw error;
@@ -421,7 +414,16 @@ export class EquipmentService {
 
       logger.info(`Tag NFC ${equipment.tag.tagId} retiré de l'équipement ${equipment.name}`);
 
-      return { success: true };
+      const updatedEquipment = await prisma.equipment.findUnique({
+        where: { id: equipmentId },
+        include: equipmentInclude
+      });
+
+      if (!updatedEquipment) {
+        throw new Error('Équipement non trouvé après suppression du tag');
+      }
+
+      return updatedEquipment;
     } catch (error) {
       logger.error('Erreur lors de la suppression du tag NFC:', error);
       throw error;

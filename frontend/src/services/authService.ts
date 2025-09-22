@@ -13,8 +13,10 @@ export class AuthService {
     return response;
   }
 
-  async register(userData: RegisterRequest): Promise<User> {
-    return await apiClient.post<User>('/auth/register', userData);
+  async register(userData: RegisterRequest): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>('/auth/register', userData);
+    apiClient.setToken(response.token);
+    return response;
   }
 
   async getCurrentUser(): Promise<User> {

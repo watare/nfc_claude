@@ -25,28 +25,24 @@ export const DashboardPage: React.FC = () => {
 
   const statusCards = [
     {
-      title: 'Total Équipements',
-      value: statistics?.total || 0,
-      color: 'bg-blue-600',
-      icon: '📦',
+      title: 'En service',
+      value: statistics?.byStatus?.IN_SERVICE ?? 0,
+      accent: 'from-emerald-500/80 to-emerald-400/60',
     },
     {
-      title: 'En Service',
-      value: statistics?.inService || 0,
-      color: 'bg-green-600',
-      icon: '✅',
+      title: 'Hors service',
+      value: statistics?.byStatus?.OUT_OF_SERVICE ?? 0,
+      accent: 'from-rose-500/80 to-rose-400/60',
     },
     {
-      title: 'Hors Service',
-      value: statistics?.outOfService || 0,
-      color: 'bg-red-600',
-      icon: '❌',
+      title: 'En maintenance',
+      value: statistics?.byStatus?.MAINTENANCE ?? 0,
+      accent: 'from-amber-500/80 to-amber-400/60',
     },
     {
-      title: 'Maintenance',
-      value: statistics?.maintenance || 0,
-      color: 'bg-yellow-600',
-      icon: '🔧',
+      title: 'Prêtés',
+      value: statistics?.byStatus?.LOANED ?? 0,
+      accent: 'from-indigo-500/80 to-indigo-400/60',
     },
   ];
 
@@ -54,8 +50,11 @@ export const DashboardPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
-        <div className="flex space-x-3">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-wide text-blue-600">Synthèse</p>
+          <h1 className="text-3xl font-semibold text-gray-900">Tableau de bord</h1>
+        </div>
+        <div className="flex flex-wrap gap-3">
           <Link to="/equipments">
             <Button variant="secondary">
               Voir tous les équipements
@@ -70,17 +69,24 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Statistiques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg">
+          <div className="space-y-2">
+            <p className="text-sm uppercase tracking-wide text-white/70">Total équipements</p>
+            <p className="text-4xl font-semibold">{statistics?.totalEquipments ?? 0}</p>
+            <p className="text-sm text-white/70">
+              Parc suivi via les puces NFC
+            </p>
+          </div>
+        </Card>
         {statusCards.map((card) => (
-          <Card key={card.title} className="text-center">
-            <div className="flex items-center justify-center space-x-3">
-              <div className={`p-3 rounded-full ${card.color} text-white`}>
-                <span className="text-2xl">{card.icon}</span>
-              </div>
+          <Card key={card.title} className="relative overflow-hidden">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                <p className="text-sm text-gray-600">{card.title}</p>
+                <p className="text-sm font-medium text-gray-500">{card.title}</p>
+                <p className="mt-2 text-3xl font-semibold text-gray-900">{card.value}</p>
               </div>
+              <div className={`h-16 w-16 rounded-full bg-gradient-to-br ${card.accent} opacity-70 blur-sm`} />
             </div>
           </Card>
         ))}
@@ -89,12 +95,15 @@ export const DashboardPage: React.FC = () => {
       {/* Répartition par catégorie */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Répartition par catégorie">
-          {statistics?.byCategory ? (
-            <div className="space-y-3">
-              {Object.entries(statistics.byCategory).map(([category, count]) => (
-                <div key={category} className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">{category}</span>
-                  <span className="text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
+          {statistics?.byCategory?.length ? (
+            <div className="space-y-4">
+              {statistics.byCategory.map(({ category, count }) => (
+                <div key={category} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{category}</p>
+                    <p className="text-xs text-gray-500">{count} équipement{count > 1 ? 's' : ''}</p>
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
                     {count}
                   </span>
                 </div>
@@ -105,78 +114,59 @@ export const DashboardPage: React.FC = () => {
           )}
         </Card>
 
-        <Card title="Répartition par localisation">
-          {statistics?.byLocation ? (
-            <div className="space-y-3">
-              {Object.entries(statistics.byLocation).map(([location, count]) => (
-                <div key={location} className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">{location}</span>
-                  <span className="text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                    {count}
+        <Card title="Activité récente">
+          {statistics?.recentActivity?.length ? (
+            <div className="space-y-4">
+              {statistics.recentActivity.map((event) => (
+                <div key={event.id} className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">{event.equipment.name}</p>
+                    <p className="text-xs text-gray-500">{event.description ?? 'Mise à jour'}</p>
+                  </div>
+                  <span className="text-xs uppercase tracking-wide text-gray-400">
+                    {new Date(event.createdAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                    })}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">Aucune donnée disponible</p>
+            <p className="text-gray-500">Aucune activité récente</p>
           )}
         </Card>
       </div>
 
       {/* Actions rapides */}
       <Card title="Actions rapides">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Link
-            to="/equipments?status=OUT_OF_SERVICE"
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl">⚠️</span>
-              <div>
-                <h3 className="font-medium text-gray-900">Équipements défaillants</h3>
-                <p className="text-sm text-gray-600">Voir les équipements hors service</p>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            to="/equipments?status=MAINTENANCE"
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl">🔧</span>
-              <div>
-                <h3 className="font-medium text-gray-900">Maintenance</h3>
-                <p className="text-sm text-gray-600">Équipements en maintenance</p>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            to="/equipments/export"
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl">📊</span>
-              <div>
-                <h3 className="font-medium text-gray-900">Export CSV</h3>
-                <p className="text-sm text-gray-600">Télécharger les données</p>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            to="/nfc"
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl">📱</span>
-              <div>
-                <h3 className="font-medium text-gray-900">Scanner NFC</h3>
-                <p className="text-sm text-gray-600">Lire et écrire des tags NFC</p>
-              </div>
-            </div>
-          </Link>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          {[{
+            title: 'Équipements hors service',
+            description: 'Identifier les équipements à remplacer',
+            to: '/equipments?status=OUT_OF_SERVICE',
+          }, {
+            title: 'Suivi maintenance',
+            description: 'Planifier les interventions à venir',
+            to: '/equipments?status=MAINTENANCE',
+          }, {
+            title: 'Exporter le parc',
+            description: 'Télécharger le fichier CSV consolidé',
+            to: '/equipments/export',
+          }, {
+            title: 'Console NFC',
+            description: 'Scanner et affecter de nouveaux tags',
+            to: '/nfc',
+          }].map((action) => (
+            <Link
+              key={action.to}
+              to={action.to}
+              className="group rounded-xl border border-gray-200 bg-white/60 p-4 transition hover:border-blue-200 hover:bg-blue-50/40"
+            >
+              <h3 className="text-sm font-semibold text-gray-900">{action.title}</h3>
+              <p className="mt-2 text-sm text-gray-600 group-hover:text-gray-700">{action.description}</p>
+            </Link>
+          ))}
         </div>
       </Card>
     </div>
