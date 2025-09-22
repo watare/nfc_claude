@@ -24,12 +24,18 @@ Prototype de gestion d'équipements avec technologie NFC utilisant :
 - [x] Schémas : Users, Equipment, NfcTags, Events
 
 ### Phase 4 : Authentification ✅
-**Objectif :** Système d'auth sécurisé
-- [x] JWT avec rôles utilisateur (ADMIN/USER)
-- [x] Hash bcrypt des mots de passe
-- [x] Middleware d'authentification et autorisation
-- [x] Routes : register, login, profile, change-password
-- [x] Rate limiting et validation des données
+**Objectif :** Système d'auth sécurisé complet backend + frontend
+- [x] **Backend** : JWT avec rôles utilisateur (ADMIN/USER)
+- [x] **Backend** : Hash bcrypt des mots de passe (10 rounds)
+- [x] **Backend** : Middleware d'authentification et autorisation
+- [x] **Backend** : Routes : register, login, profile, change-password
+- [x] **Backend** : Rate limiting (100 req/15min) et validation des données
+- [x] **Frontend** : Hook useAuth avec AuthContext React
+- [x] **Frontend** : Persistance JWT dans localStorage
+- [x] **Frontend** : Routes protégées avec ProtectedRoute component
+- [x] **Frontend** : Formulaires LoginForm et RegisterForm
+- [x] **Frontend** : Intercepteurs Axios pour auth automatique
+- [x] **Frontend** : Gestion états login/logout/register
 
 ### Phase 5 : API Équipements ✅
 **Objectif :** CRUD complet des équipements
@@ -121,13 +127,36 @@ chmod +x deploy-docker.sh
 ## 📊 État Actuel du Projet
 
 ### ✅ Fonctionnalités Implementées
-- **Authentification JWT** : Login, register, profils, changement mot de passe
-- **Gestion équipements** : CRUD complet avec validation
-- **Tags NFC** : Association/dissociation aux équipements
-- **Export données** : CSV des équipements avec filtres
-- **Événements** : Historique automatique des actions
-- **Statistiques** : Répartition par statut/catégorie
-- **Sécurité** : Rate limiting, CORS, validation, logs
+
+#### 🔐 Authentification & Sécurité
+- **JWT Backend** : Tokens sécurisés avec rôles ADMIN/USER
+- **Hash bcrypt** : Mots de passe hashés (10 rounds)
+- **Authentification Frontend** : Hook useAuth + AuthContext React
+- **Routes protégées** : ProtectedRoute component avec redirection
+- **Persistance auth** : JWT stocké en localStorage avec refresh auto
+- **Rate limiting** : 100 requêtes/15 minutes par IP
+- **CORS sécurisé** : Origins configurés, headers de sécurité
+- **Validation stricte** : Joi validation sur tous les endpoints
+
+#### 🗄️ Base de Données & Gestion Utilisateurs
+- **PostgreSQL** : Base de données relationnelle avec Prisma ORM
+- **Schémas complets** : User, Equipment, NfcTag, EquipmentEvent
+- **Migrations automatiques** : Prisma migrate avec historique
+- **Index optimisés** : Performance sur recherches et jointures
+- **Contraintes intégrité** : Relations foreign keys, unique constraints
+- **Soft delete** : Archivage utilisateurs avec isActive
+- **Audit trail** : Historique complet des actions utilisateur
+- **Seed data** : Données de test configurables
+
+#### 📦 Gestion d'Équipements
+- **CRUD complet** : Création, lecture, modification, suppression
+- **Validation métier** : Règles business dans services
+- **Pagination avancée** : Limit/offset avec compteur total
+- **Filtres multiples** : Par statut, catégorie, utilisateur, dates
+- **Tags NFC** : Association/dissociation avec équipements
+- **Export CSV** : Données filtrées exportables
+- **Événements automatiques** : Log de toutes les actions
+- **Statistiques** : Répartition par statut/catégorie temps réel
 
 ### 🎯 API Endpoints Disponibles
 ```
@@ -152,29 +181,110 @@ POST   /api/equipments/:id/nfc-tag - Assigner tag
 DELETE /api/equipments/:id/nfc-tag - Retirer tag
 ```
 
-### 🗄️ Modèles de Données
+### 🗄️ Modèles de Données & Relations
+
+#### 👤 Modèle User (Utilisateurs)
 ```typescript
-User {
-  id, email, password, firstName, lastName
-  role: ADMIN | USER
-  isActive, createdAt, updatedAt
-}
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String   // Hash bcrypt (10 rounds)
+  firstName   String
+  lastName    String
+  role        UserRole @default(USER) // ADMIN | USER
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-Equipment {
-  id, name, description, category, location, notes
-  status: IN_SERVICE | OUT_OF_SERVICE | MAINTENANCE | LOANED
-  createdBy, createdAt, updatedAt
-}
+  // Relations
+  equipments       Equipment[]     // Équipements créés
+  equipmentEvents  EquipmentEvent[] // Événements effectués
 
-NfcTag {
-  id, tagId, equipmentId, isActive
-}
-
-EquipmentEvent {
-  id, equipmentId, userId, type, description
-  metadata: JSON, createdAt
+  @@map("users")
 }
 ```
+
+#### 📦 Modèle Equipment (Équipements)
+```typescript
+model Equipment {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  location    String?
+  notes       String?
+  status      EquipmentStatus @default(IN_SERVICE)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  createdBy   String
+
+  // Relations
+  creator User              @relation(fields: [createdBy], references: [id])
+  nfcTag  NfcTag?           // Tag NFC associé (optionnel)
+  events  EquipmentEvent[]  // Historique des événements
+
+  @@map("equipments")
+}
+
+enum EquipmentStatus {
+  IN_SERVICE      // En service
+  OUT_OF_SERVICE  // Hors service
+  MAINTENANCE     // En maintenance
+  LOANED          // Prêté
+}
+```
+
+#### 🏷️ Modèle NfcTag (Tags NFC)
+```typescript
+model NfcTag {
+  id          String    @id @default(cuid())
+  tagId       String    @unique  // ID physique du tag NFC
+  equipmentId String    @unique  // Un tag = un équipement
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@map("nfc_tags")
+}
+```
+
+#### 📊 Modèle EquipmentEvent (Historique)
+```typescript
+model EquipmentEvent {
+  id          String                @id @default(cuid())
+  equipmentId String
+  userId      String
+  type        EquipmentEventType
+  description String
+  metadata    Json?                 // Données contextuelles
+  createdAt   DateTime              @default(now())
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("equipment_events")
+}
+
+enum EquipmentEventType {
+  CREATED       // Création équipement
+  UPDATED       // Modification
+  DELETED       // Suppression
+  NFC_ASSIGNED  // Tag NFC assigné
+  NFC_REMOVED   // Tag NFC retiré
+  STATUS_CHANGED // Changement statut
+}
+```
+
+#### 🔗 Relations & Contraintes
+- **User ↔ Equipment** : Un utilisateur peut créer plusieurs équipements
+- **Equipment ↔ NfcTag** : Relation 1:1 (un équipement = un tag max)
+- **Equipment ↔ EquipmentEvent** : Relation 1:N (historique complet)
+- **User ↔ EquipmentEvent** : Un utilisateur génère plusieurs événements
+- **Contraintes** : Email unique, tagId unique, foreign keys avec cascade
 
 ---
 
@@ -240,22 +350,40 @@ npm run db:studio       # Interface graphique DB
 
 ## 🚨 Points d'Attention
 
-### Prérequis NFC
-- **HTTPS obligatoire** pour Web NFC API
-- **Android Chrome 89+** uniquement supporté
-- **Permissions utilisateur** requises
+### 🔐 Sécurité & Authentification
+- **JWT Secrets** : OBLIGATOIRE en production (256+ bits)
+- **HTTPS forcé** : Requis pour Web NFC et sécurité JWT
+- **Variables d'environnement** : Tous les secrets externalisés
+- **Rate limiting** : 100 req/15min par IP (configurable)
+- **CORS strict** : Origins autorisés uniquement
+- **Validation Joi** : Toutes les entrées utilisateur validées
+- **Hash bcrypt** : 10 rounds minimum (configurable)
+- **Headers sécurité** : HSTS, CSP, X-Frame-Options actifs
 
-### Sécurité
-- Variables d'environnement configurées
-- JWT secrets forts en production
-- Rate limiting activé
-- Validation stricte des entrées
+### 🗄️ Base de Données & Performance
+- **Index optimisés** : email, tagId, status, category, createdAt
+- **Pagination obligatoire** : Limit 50 par défaut, max 100
+- **Transactions Prisma** : Opérations critiques atomiques
+- **Soft delete** : isActive=false au lieu de suppression physique
+- **Contraintes intégrité** : Foreign keys avec CASCADE/RESTRICT
+- **Connection pooling** : Pool size adapté à la charge
+- **Backup automatisé** : Script make backup-db disponible
 
-### Performance
-- Pagination sur toutes les listes
-- Index sur colonnes recherchées
-- Compression gzip activée
-- Cache navigateur configuré
+### 👥 Gestion Utilisateurs & Permissions
+- **Rôles granulaires** : ADMIN (full access) / USER (limited)
+- **Audit trail complet** : Tous les événements tracés
+- **Session persistence** : JWT localStorage avec expiration
+- **Changement mot de passe** : Validation ancienne + nouvelle
+- **Désactivation compte** : Soft delete avec isActive=false
+- **Logs sécurisés** : Pas de mots de passe en logs
+- **Rate limiting auth** : Protection brute force
+
+### 📱 Prérequis NFC
+- **HTTPS obligatoire** : Web NFC API refuse HTTP
+- **Android Chrome 89+** : Seul navigateur supporté
+- **Permissions utilisateur** : Demande explicite requise
+- **Format NDEF** : Messages structurés equipment data
+- **Gestion erreurs** : Timeouts, permission denied, unsupported
 
 ---
 

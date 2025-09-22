@@ -25,8 +25,8 @@ FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Note: dumb-init removed due to network issues
+# Alternative: use node --init for signal handling
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -49,8 +49,6 @@ USER backend
 
 EXPOSE 5000
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
+# Use node --init for signal handling (alternative to dumb-init)
 # Run migrations and start server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/app.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node --init dist/app.js"]

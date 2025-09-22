@@ -4,6 +4,8 @@
 # Variables
 COMPOSE_FILE := docker-compose.yml
 COMPOSE_DEV_FILE := docker-compose.dev.yml
+BACKEND_PORT ?= 5000
+FRONTEND_PORT ?= 3000
 
 # Aide par défaut
 help: ## Afficher cette aide
@@ -15,15 +17,16 @@ help: ## Afficher cette aide
 
 dev: ## Démarrer l'environnement de développement
 	@echo "🚀 Démarrage de l'environnement de développement..."
-	npm run dev
+	@echo "Backend: http://localhost:$(BACKEND_PORT) | Frontend: http://localhost:$(FRONTEND_PORT)"
+	@export PORT=$(BACKEND_PORT) && export FRONTEND_PORT=$(FRONTEND_PORT) && npm run dev
 
 dev-backend: ## Démarrer uniquement le backend en développement
-	@echo "🔧 Démarrage du backend..."
-	npm run dev:backend
+	@echo "🔧 Démarrage du backend sur le port $(BACKEND_PORT)..."
+	cd backend && PORT=$(BACKEND_PORT) npm run dev
 
 dev-frontend: ## Démarrer uniquement le frontend en développement
-	@echo "🎨 Démarrage du frontend..."
-	npm run dev:frontend
+	@echo "🎨 Démarrage du frontend sur le port $(FRONTEND_PORT)..."
+	cd frontend && npm run dev -- --port $(FRONTEND_PORT)
 
 # === COMMANDES DE BUILD ===
 
@@ -31,13 +34,25 @@ build: ## Builder les images Docker
 	@echo "🔨 Construction des images Docker..."
 	docker compose -f $(COMPOSE_FILE) build
 
+build-nocache: ## Builder les images Docker sans cache
+	@echo "🔨 Construction des images Docker (sans cache)..."
+	docker compose -f $(COMPOSE_FILE) build --no-cache
+
 build-backend: ## Builder uniquement l'image backend
 	@echo "🔧 Construction de l'image backend..."
 	docker compose -f $(COMPOSE_FILE) build backend
 
+build-backend-nocache: ## Builder uniquement l'image backend sans cache
+	@echo "🔧 Construction de l'image backend (sans cache)..."
+	docker compose -f $(COMPOSE_FILE) build --no-cache backend
+
 build-frontend: ## Builder uniquement l'image frontend
 	@echo "🎨 Construction de l'image frontend..."
 	docker compose -f $(COMPOSE_FILE) build frontend
+
+build-frontend-nocache: ## Builder uniquement l'image frontend sans cache
+	@echo "🎨 Construction de l'image frontend (sans cache)..."
+	docker compose -f $(COMPOSE_FILE) build --no-cache frontend
 
 # === COMMANDES DE DÉPLOIEMENT ===
 
@@ -156,11 +171,20 @@ clean-node: ## Nettoyer les node_modules
 deploy: build up ## Déployer en production (build + up)
 	@echo "🚀 Déploiement en production terminé!"
 
+deploy-nocache: build-nocache up ## Déployer en production sans cache (build + up)
+	@echo "🚀 Déploiement en production (sans cache) terminé!"
+
 deploy-backend: build-backend up-backend ## Déployer uniquement le backend
 	@echo "🔧 Déploiement backend terminé!"
 
+deploy-backend-nocache: build-backend-nocache up-backend ## Déployer uniquement le backend sans cache
+	@echo "🔧 Déploiement backend (sans cache) terminé!"
+
 deploy-frontend: build-frontend up-frontend ## Déployer uniquement le frontend
 	@echo "🎨 Déploiement frontend terminé!"
+
+deploy-frontend-nocache: build-frontend-nocache up-frontend ## Déployer uniquement le frontend sans cache
+	@echo "🎨 Déploiement frontend (sans cache) terminé!"
 
 # === COMMANDES D'INSTALLATION ===
 

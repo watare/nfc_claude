@@ -10,6 +10,10 @@ export class AuthController {
       // Vérification des erreurs de validation
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        logger.warn('Erreurs de validation lors de l\'inscription:', {
+          errors: errors.array(),
+          body: { ...req.body, password: '[HIDDEN]' }
+        });
         res.status(400).json({
           error: 'Données invalides',
           details: errors.array()

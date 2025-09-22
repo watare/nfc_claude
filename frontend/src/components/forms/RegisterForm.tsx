@@ -42,10 +42,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
     if (!formData.firstName.trim()) {
       errors.firstName = 'Prénom requis';
+    } else if (formData.firstName.trim().length < 2 || formData.firstName.trim().length > 50) {
+      errors.firstName = 'Le prénom doit contenir entre 2 et 50 caractères';
+    } else if (!/^[a-zA-ZÀ-ÿ\s'-]+$/.test(formData.firstName.trim())) {
+      errors.firstName = 'Le prénom ne peut contenir que des lettres, espaces, apostrophes et tirets';
     }
 
     if (!formData.lastName.trim()) {
       errors.lastName = 'Nom requis';
+    } else if (formData.lastName.trim().length < 2 || formData.lastName.trim().length > 50) {
+      errors.lastName = 'Le nom doit contenir entre 2 et 50 caractères';
+    } else if (!/^[a-zA-ZÀ-ÿ\s'-]+$/.test(formData.lastName.trim())) {
+      errors.lastName = 'Le nom ne peut contenir que des lettres, espaces, apostrophes et tirets';
     }
 
     if (!formData.email) {
@@ -56,8 +64,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
     if (!formData.password) {
       errors.password = 'Mot de passe requis';
-    } else if (formData.password.length < 6) {
-      errors.password = 'Le mot de passe doit contenir au moins 6 caractères';
+    } else if (formData.password.length < 8) {
+      errors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/.test(formData.password)) {
+      errors.password = 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre';
     }
 
     if (!formData.confirmPassword) {
