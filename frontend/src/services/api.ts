@@ -47,6 +47,14 @@ class ApiClient {
     this.token = localStorage.getItem('authToken');
   }
 
+  private extractResponse<T>(payload: any): T {
+    if (payload && typeof payload === 'object' && 'data' in payload && payload.data !== undefined) {
+      return payload.data as T;
+    }
+
+    return payload as T;
+  }
+
   setToken(token: string): void {
     this.token = token;
     localStorage.setItem('authToken', token);
@@ -68,22 +76,22 @@ class ApiClient {
   // Méthodes HTTP génériques
   async get<T>(url: string, params?: Record<string, any>): Promise<T> {
     const response: AxiosResponse<T> = await this.client.get(url, { params });
-    return response.data;
+    return this.extractResponse<T>(response.data);
   }
 
   async post<T>(url: string, data?: any): Promise<T> {
     const response: AxiosResponse<T> = await this.client.post(url, data);
-    return response.data;
+    return this.extractResponse<T>(response.data);
   }
 
   async put<T>(url: string, data?: any): Promise<T> {
     const response: AxiosResponse<T> = await this.client.put(url, data);
-    return response.data;
+    return this.extractResponse<T>(response.data);
   }
 
   async delete<T>(url: string): Promise<T> {
     const response: AxiosResponse<T> = await this.client.delete(url);
-    return response.data;
+    return this.extractResponse<T>(response.data);
   }
 }
 

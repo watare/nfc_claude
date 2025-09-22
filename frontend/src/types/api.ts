@@ -5,32 +5,43 @@ export interface User {
   firstName: string;
   lastName: string;
   role: 'ADMIN' | 'USER';
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+export type EquipmentStatus = 'IN_SERVICE' | 'OUT_OF_SERVICE' | 'MAINTENANCE' | 'LOANED';
 
 export interface Equipment {
   id: string;
   name: string;
   category: string;
-  status: 'IN_SERVICE' | 'OUT_OF_SERVICE' | 'MAINTENANCE' | 'RETIRED';
-  location: string;
+  status: EquipmentStatus;
+  location?: string;
   description?: string;
   serialNumber?: string;
   purchaseDate?: string;
   warrantyEndDate?: string;
-  nfcTagId?: string;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
-  nfcTag?: NfcTag;
-  events?: EquipmentEvent[];
+  notes?: string;
+  tag?: NfcTag | null;
+  creator?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  _count?: {
+    events: number;
+  };
 }
 
 export interface NfcTag {
   id: string;
-  uid: string;
-  equipmentId?: string;
+  tagId: string;
+  equipmentId?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -39,7 +50,7 @@ export interface NfcTag {
 export interface EquipmentEvent {
   id: string;
   equipmentId: string;
-  type: 'CREATED' | 'UPDATED' | 'STATUS_CHANGED' | 'LOCATION_CHANGED' | 'NFC_TAG_ASSIGNED' | 'NFC_TAG_REMOVED';
+  type: 'LOAN' | 'RETURN' | 'MAINTENANCE_START' | 'MAINTENANCE_END' | 'STATUS_CHANGE' | 'TAG_ASSIGNED' | 'TAG_REMOVED';
   description: string;
   metadata?: Record<string, any>;
   createdAt: string;
@@ -48,13 +59,17 @@ export interface EquipmentEvent {
 }
 
 export interface EquipmentStatistics {
-  total: number;
-  inService: number;
-  outOfService: number;
-  maintenance: number;
-  retired: number;
-  byCategory: Record<string, number>;
-  byLocation: Record<string, number>;
+  totalEquipments: number;
+  byStatus: Record<string, number>;
+  byCategory: Array<{ category: string; count: number }>;
+  recentActivity: Array<{
+    id: string;
+    type: EquipmentEvent['type'];
+    description: string | null;
+    createdAt: string;
+    equipment: { id: string; name: string };
+    user: { id: string; firstName: string; lastName: string };
+  }>;
 }
 
 // Request/Response types
@@ -90,10 +105,14 @@ export interface UpdateEquipmentRequest extends Partial<CreateEquipmentRequest> 
 
 export interface EquipmentListResponse {
   equipments: Equipment[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  pagination: {
+    currentPage: number;
+    itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }
 
 export interface EquipmentFilters {

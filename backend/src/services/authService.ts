@@ -29,6 +29,8 @@ export interface AuthResponse {
     lastName: string;
     role: UserRole;
     isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
   };
   token: string;
 }
@@ -72,7 +74,9 @@ export class AuthService {
           firstName: true,
           lastName: true,
           role: true,
-          isActive: true
+          isActive: true,
+          createdAt: true,
+          updatedAt: true
         }
       });
 
@@ -136,7 +140,9 @@ export class AuthService {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          isActive: user.isActive
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
         },
         token
       };
@@ -213,6 +219,7 @@ export class AuthService {
           lastName: true,
           role: true,
           isActive: true,
+          createdAt: true,
           updatedAt: true
         }
       });

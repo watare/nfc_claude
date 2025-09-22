@@ -31,10 +31,7 @@ export class AuthController {
         role
       });
 
-      res.status(201).json({
-        message: 'Utilisateur créé avec succès',
-        data: result
-      });
+      res.status(201).json(result);
     } catch (error) {
       logger.error('Erreur dans register controller:', error);
 
@@ -69,10 +66,7 @@ export class AuthController {
 
       const result = await AuthService.login({ email, password });
 
-      res.json({
-        message: 'Connexion réussie',
-        data: result
-      });
+      res.json(result);
     } catch (error) {
       logger.error('Erreur dans login controller:', error);
 
@@ -98,10 +92,7 @@ export class AuthController {
 
       const profile = await AuthService.getProfile(req.user.id);
 
-      res.json({
-        message: 'Profil récupéré avec succès',
-        data: profile
-      });
+      res.json(profile);
     } catch (error) {
       logger.error('Erreur dans getMe controller:', error);
 
@@ -139,10 +130,7 @@ export class AuthController {
         email
       });
 
-      res.json({
-        message: 'Profil mis à jour avec succès',
-        data: updatedUser
-      });
+      res.json(updatedUser);
     } catch (error) {
       logger.error('Erreur dans updateProfile controller:', error);
 

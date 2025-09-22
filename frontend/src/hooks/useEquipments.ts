@@ -28,9 +28,9 @@ export const useEquipments = (initialFilters?: EquipmentFilters) => {
       const response = await equipmentService.getEquipments(filtersToUse);
 
       setEquipments(response.equipments);
-      setTotal(response.total);
-      setTotalPages(response.totalPages);
-      setCurrentPage(response.page);
+      setTotal(response.pagination.totalItems);
+      setTotalPages(response.pagination.totalPages);
+      setCurrentPage(response.pagination.currentPage);
     } catch (err) {
       const apiError = err as ApiError;
       setError(apiError.message);
@@ -87,10 +87,10 @@ export const useEquipments = (initialFilters?: EquipmentFilters) => {
     }
   };
 
-  const assignNfcTag = async (equipmentId: string, nfcTagUid: string): Promise<void> => {
+  const assignNfcTag = async (equipmentId: string, tagId: string): Promise<void> => {
     try {
       setError(null);
-      const updatedEquipment = await equipmentService.assignNfcTag(equipmentId, nfcTagUid);
+      const updatedEquipment = await equipmentService.assignNfcTag(equipmentId, tagId);
       setEquipments(prev => prev.map(eq => eq.id === equipmentId ? updatedEquipment : eq));
     } catch (err) {
       const apiError = err as ApiError;

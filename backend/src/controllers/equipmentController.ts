@@ -33,10 +33,7 @@ export class EquipmentController {
         notes
       }, req.user.id);
 
-      res.status(201).json({
-        message: 'Équipement créé avec succès',
-        data: equipment
-      });
+      res.status(201).json(equipment);
     } catch (error) {
       logger.error('Erreur dans createEquipment controller:', error);
 
@@ -72,10 +69,7 @@ export class EquipmentController {
 
       const result = await EquipmentService.getEquipments(filters, options);
 
-      res.json({
-        message: 'Équipements récupérés avec succès',
-        data: result
-      });
+      res.json(result);
     } catch (error) {
       logger.error('Erreur dans getEquipments controller:', error);
       res.status(500).json({ error: 'Erreur serveur lors de la récupération des équipements' });
@@ -94,10 +88,7 @@ export class EquipmentController {
 
       const equipment = await EquipmentService.getEquipmentById(id);
 
-      res.json({
-        message: 'Équipement récupéré avec succès',
-        data: equipment
-      });
+      res.json(equipment);
     } catch (error) {
       logger.error('Erreur dans getEquipmentById controller:', error);
 
@@ -145,10 +136,7 @@ export class EquipmentController {
         notes
       }, req.user.id);
 
-      res.json({
-        message: 'Équipement mis à jour avec succès',
-        data: equipment
-      });
+      res.json(equipment);
     } catch (error) {
       logger.error('Erreur dans updateEquipment controller:', error);
 
@@ -181,10 +169,7 @@ export class EquipmentController {
 
       const result = await EquipmentService.deleteEquipment(id, req.user.id);
 
-      res.json({
-        message: 'Équipement supprimé avec succès',
-        data: result
-      });
+      res.json(result);
     } catch (error) {
       logger.error('Erreur dans deleteEquipment controller:', error);
 
@@ -227,12 +212,9 @@ export class EquipmentController {
 
       const { tagId } = req.body;
 
-      const nfcTag = await EquipmentService.assignNfcTag(id, tagId, req.user.id);
+      const equipment = await EquipmentService.assignNfcTag(id, tagId, req.user.id);
 
-      res.json({
-        message: 'Tag NFC assigné avec succès',
-        data: nfcTag
-      });
+      res.json(equipment);
     } catch (error) {
       logger.error('Erreur dans assignNfcTag controller:', error);
 
@@ -265,12 +247,9 @@ export class EquipmentController {
         return;
       }
 
-      const result = await EquipmentService.removeNfcTag(id, req.user.id);
+      const equipment = await EquipmentService.removeNfcTag(id, req.user.id);
 
-      res.json({
-        message: 'Tag NFC retiré avec succès',
-        data: result
-      });
+      res.json(equipment);
     } catch (error) {
       logger.error('Erreur dans removeNfcTag controller:', error);
 
@@ -291,10 +270,7 @@ export class EquipmentController {
     try {
       const statistics = await EquipmentService.getStatistics();
 
-      res.json({
-        message: 'Statistiques récupérées avec succès',
-        data: statistics
-      });
+      res.json(statistics);
     } catch (error) {
       logger.error('Erreur dans getStatistics controller:', error);
       res.status(500).json({ error: 'Erreur serveur lors de la récupération des statistiques' });
